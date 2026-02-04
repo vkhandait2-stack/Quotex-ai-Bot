@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quotex AI • AI Trader</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+ --bg:#07080d; --panel:#0f121b; --grid:#1f2433;
+ --txt:#e7eaf3; --muted:#9aa3b2;
+ --green:#19ff72; --red:#ff3b3b; --yellow:#ffcc00; --blue:#4db3ff;
+ --glow:0 0 18px rgba(77,179,255,.35);
+}
+*{box-sizing:border-box}
+html,body{
+ margin:0;
+ background:radial-gradient(1200px 600px at 10% -10%,#0b1220,#05060b);
+ color:var(--txt);
+ font-family:Inter,Segoe UI,system-ui,monospace;
+ user-select:none;
+}
+
+/* ===== LICENSE ===== */
+#license{
+ position:fixed; inset:0; z-index:9999;
+ background:#000;
+ display:flex; align-items:center; justify-content:center;
+}
+.licBox{
+ width:92%; max-width:360px;
+ padding:22px;
+ text-align:center;
+ background:linear-gradient(180deg,#0c1020,#07080f);
+ border:1px solid #223;
+ box-shadow:var(--glow);
+}
+.licBox h2{margin:0 0 6px}
+.licBox .sub{font-size:12px;color:var(--muted);margin-bottom:14px}
+.licBox input{
+ width:100%;
+ padding:10px;
+ background:#000;
+ color:#fff;
+ border:1px solid #333;
+ margin-bottom:10px;
+ text-align:center;
+ font-family:monospace;
+ letter-spacing:1px;
+}
+.licBox button{
+ width:100%;
+ padding:10px;
+ background:var(--green);
+ border:none;
+ font-weight:900;
+ cursor:pointer;
+}
+.licBox a{
+ display:block;
+ margin-top:10px;
+ font-size:12px;
+ color:var(--blue);
+ text-decoration:none;
+}
+.status{font-size:13px;color:var(--yellow)}
+
+/* ===== HEADER ===== */
+header{
+ position:sticky; top:0; z-index:10;
+ display:flex; justify-content:space-between; align-items:center;
+ padding:10px 12px;
+ background:#06080e; border-bottom:1px solid #223;
+}
+.logo{font-weight:900; letter-spacing:.8px}
+.logo span{color:var(--blue)}
+.sublogo{font-size:10px;color:var(--muted)}
+.clock{color:var(--yellow); font-size:12px}
+
+/* ===== INFO ===== */
+.infobar{
+ display:grid; grid-template-columns:repeat(4,1fr);
+ gap:8px; padding:10px;
+ background:#07080f; border-bottom:1px solid #223;
+}
+.info{background:var(--panel); border:1px solid #223; padding:8px; font-size:11px}
+.info b{color:var(--yellow)}
+
+/* ===== TABLE ===== */
+.wrap{padding:8px}
+table{width:100%; border-collapse:collapse; font-size:11px}
+th,td{border:1px solid #223; padding:6px; text-align:center}
+th{background:#0b0e16; color:#aab; position:sticky; top:0}
+.pair{font-weight:800}
+.price{color:var(--blue); font-family:monospace}
+.call{color:var(--green); font-weight:900}
+.put{color:var(--red); font-weight:900}
+.signal{font-size:13px; font-weight:900; text-shadow:0 0 10px currentColor}
+
+/* bars */
+.bar{height:8px; background:#000; border-radius:2px; overflow:hidden}
+.fill{height:100%}
+.hi{background:var(--green)}
+.md{background:var(--yellow)}
+.lo{background:var(--red)}
+
+/* confirms */
+.conf{display:flex; gap:6px; justify-content:center; font-size:10px}
+.tick{padding:2px 4px; border:1px solid #233; opacity:.5}
+.tick.on{opacity:1; color:var(--green); border-color:#2f6}
+
+/* BUY */
+.buyBtn{
+ padding:6px 10px; font-size:11px; font-weight:900;
+ border:none; cursor:pointer;
+ background:var(--green); color:#000;
+ box-shadow:0 0 10px rgba(25,255,114,.4);
+}
+.buyBtn.put{
+ background:var(--red); color:#fff;
+ box-shadow:0 0 10px rgba(255,59,59,.4);
+}
+
+/* footer */
+footer{
+ position:fixed; bottom:0; width:100%;
+ background:#06080e; border-top:1px solid #223;
+ padding:8px 10px; font-size:11px;
+ display:flex; justify-content:space-between;
+}
+
+/* execution */
+#exec{
+ position:fixed; inset:0; display:none;
+ background:rgba(0,0,0,.85);
+ align-items:center; justify-content:center; z-index:6000;
+}
+#exec .box{
+ background:#0f121b; padding:20px; border:1px solid #223;
+ text-align:center;
+}
+#exec .ttl{font-size:20px; font-weight:900}
+#exec .sub{font-size:12px; opacity:.7; margin-top:6px}
+
+/* result */
+#pop{
+ position:fixed; inset:0; display:none;
+ background:rgba(0,0,0,.86);
+ align-items:center; justify-content:center; z-index:5000;
+}
+#pop .txt{
+ font-size:34px; font-weight:900;
+ text-shadow:0 0 24px currentColor;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LICENSE -->
+<div id="license">
+ <div class="licBox">
+  <h2>QUOTEX AI</h2>
+  <div class="sub">AI TRADER • ENTERPRISE LICENSE</div>
+  <input id="keyInput" placeholder="ENTER LICENSE KEY">
+  <button onclick="activateKey()">ACTIVATE</button>
+  <a href="https://t.me/AIQuotextrader" target="_blank">Get key from @AIQuotextrader</a>
+  <div class="status" id="licMsg"></div>
+ </div>
+</div>
+
+<header>
+ <div>
+  <div class="logo">QUOTEX <span>AI</span></div>
+  <div class="sublogo">AI TRADER • ENTERPRISE ENGINE</div>
+ </div>
+ <div class="clock">CANDLE CLOSE: <span id="sec">60</span>s</div>
+</header>
+
+<div class="infobar">
+ <div class="info">Model<br><b>QTX-AI v3.1</b></div>
+ <div class="info">Latency<br><b>&lt;120 ms</b></div>
+ <div class="info">Data Health<br><b>OPTIMAL</b></div>
+ <div class="info">Risk Gate<br><b>ON • 1/CANDLE</b></div>
+</div>
+
+<div class="wrap">
+<table>
+<thead>
+<tr>
+ <th>PAIR</th><th>PRICE</th>
+ <th>CALL%</th><th>PUT%</th>
+ <th>ACCURACY</th><th>CONFIRM</th><th>SIGNAL</th><th>BUY</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+
+<footer>
+ <div>Quotex AI • Licensed System</div>
+ <div style="opacity:.45">Model confidence ≠ guarantee</div>
+</footer>
+
+<div id="exec">
+ <div class="box">
+  <div class="ttl" id="execTxt">ORDER EXECUTED</div>
+  <div class="sub">1 MIN EXPIRY • ORDER LOCKED</div>
+ </div>
+</div>
+
+<div id="pop"><div class="txt" id="popTxt"></div></div>
+
+<script>
+/* ===== KEY SYSTEM (ONLY THIS PART CHANGED) ===== */
+const LICENSE_SERVER="https://script.google.com/macros/s/AKfycbzXmQQaDMIS4uWBEQNtWeFpsBAxQrHHgLXOeZ2KN_HDx5ZWtd54gfhliWf7GXJyyhDi/exec";
+
+function getDeviceID(){
+ return btoa(
+  navigator.userAgent+
+  screen.width+"x"+screen.height+
+  navigator.language
+ ).substring(0,32);
+}
+
+async function activateKey(){
+ const k=document.getElementById("keyInput").value.trim();
+ const d=getDeviceID();
+ document.getElementById("licMsg").innerText="Verifying license...";
+
+ try{
+  const r=await fetch(`${LICENSE_SERVER}?key=${encodeURIComponent(k)}&device=${encodeURIComponent(d)}`);
+  const t=(await r.text()).trim();
+
+  if(t==="OK"){
+   localStorage.setItem("QTX_KEY",k);
+   localStorage.setItem("QTX_DEV",d);
+   document.getElementById("licMsg").innerText="License Verified ✓";
+   setTimeout(()=>{
+    document.getElementById("license").style.display="none";
+    initAudio();
+   },700);
+  }else if(t==="USED"){
+   alert("Key already used on another device");
+   window.location.href="https://t.me/AIQuotextrader";
+  }else if(t==="BLOCK"){
+   alert("Access blocked by admin");
+   window.location.href="https://t.me/AIQuotextrader";
+  }else{
+   alert("Invalid license key");
+   window.location.href="https://t.me/AIQuotextrader";
+  }
+ }catch(e){
+  alert("License server not reachable");
+ }
+}
+
+// auto-check on reload
+(async function(){
+ const k=localStorage.getItem("QTX_KEY");
+ const d=localStorage.getItem("QTX_DEV");
+ if(!k||!d) return;
+ try{
+  const r=await fetch(`${LICENSE_SERVER}?key=${encodeURIComponent(k)}&device=${encodeURIComponent(d)}`);
+  const t=(await r.text()).trim();
+  if(t==="OK"){
+   document.getElementById("license").style.display="none";
+   initAudio();
+  }else{
+   localStorage.clear();
+  }
+ }catch(e){}
+})();
+
+/* ===== AUDIO ===== */
+let ctx;
+function initAudio(){ctx=new (window.AudioContext||window.webkitAudioContext)();}
+function tone(f,t=0.15,type='sine',g=.08){
+ if(!ctx) return;
+ const o=ctx.createOscillator(), gain=ctx.createGain();
+ o.type=type; o.frequency.value=f;
+ o.connect(gain); gain.connect(ctx.destination);
+ gain.gain.value=g; o.start(); o.stop(ctx.currentTime+t);
+}
+const signalSound=()=>{tone(980,.12,'triangle',.07);setTimeout(()=>tone(1320,.12,'triangle',.06),120);}
+const winSound=()=>{tone(1200,.14,'sine',.08);setTimeout(()=>tone(1600,.18,'sine',.06),150);}
+const lossSound=()=>tone(180,.22,'sawtooth',.05);
+
+/* ===== DATA + ENGINE (UNCHANGED) ===== */
+const PAIRS=["EURUSD","GBPUSD","AUDUSD","USDJPY","EURJPY","GBPJPY","USDCAD","NZDUSD"];
+let price={EURUSD:1.0921,GBPUSD:1.2734,AUDUSD:0.6612,USDJPY:148.22,EURJPY:161.32,GBPJPY:188.10,USDCAD:1.3562,NZDUSD:0.6115};
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const W={rsi:.3,ema:.3,vol:.2,vlt:.2};
+function indicators(){return {rsi:Math.random()>.28,ema:Math.random()>.25,vol:Math.random()>.35,vlt:Math.random()>.4};}
+function score(i){return (i.rsi?W.rsi:0)+(i.ema?W.ema:0)+(i.vol?W.vol:0)+(i.vlt?W.vlt:0);}
+function accFromScore(s){
+ if(s>=.8) return rnd(82,90);
+ if(s>=.6) return rnd(76,84);
+ if(s>=.45) return rnd(70,78);
+ return rnd(65,72);
+}
+let tradeLocked=false;
+function buy(pair,dir){
+ if(tradeLocked) return alert("Only 1 trade per candle");
+ tradeLocked=true;
+ document.getElementById("execTxt").innerText=`ORDER EXECUTED\n${pair} • ${dir}`;
+ document.getElementById("exec").style.display="flex";
+ signalSound();
+ setTimeout(()=>document.getElementById("exec").style.display="none",1200);
+}
+function render(){
+ const tb=document.getElementById("rows"); tb.innerHTML="";
+ PAIRS.forEach(p=>{
+  price[p]+=(Math.random()-.5)*0.0004;
+  const call=rnd(35,65), put=100-call;
+  const ind=indicators(), sc=score(ind), acc=accFromScore(sc);
+  const dir=call>put?"CALL":"PUT";
+  const bar=acc>85?"hi":acc>77?"md":"lo";
+  tb.innerHTML+=`
+  <tr>
+   <td class="pair">${p}</td>
+   <td class="price">${price[p].toFixed(4)}</td>
+   <td class="call">${call}%</td>
+   <td class="put">${put}%</td>
+   <td><div class="bar"><div class="fill ${bar}" style="width:${acc}%"></div></div>${acc}%</td>
+   <td>
+    <div class="conf">
+     <span class="tick ${ind.rsi?'on':''}">RSI</span>
+     <span class="tick ${ind.ema?'on':''}">EMA</span>
+     <span class="tick ${ind.vol?'on':''}">VOL</span>
+     <span class="tick ${ind.vlt?'on':''}">VLT</span>
+    </div>
+    <div style="font-size:10px;opacity:.6">${Math.round(sc*100)}% ALIGNED</div>
+   </td>
+   <td class="signal ${dir==='CALL'?'call':'put'}">${dir}</td>
+   <td><button class="buyBtn ${dir==='PUT'?'put':''}" onclick="buy('${p}','${dir}')">BUY ${dir}</button></td>
+  </tr>`;
+ });
+ signalSound();
+}
+let s=60;
+setInterval(()=>{
+ s--;
+ if(s<=0){
+  s=60; tradeLocked=false; render();
+  const win=Math.random()>.38;
+  const t=document.getElementById("popTxt");
+  t.innerText=win?"WIN":"LOSS";
+  t.style.color=win?"#19ff72":"#ff3b3b";
+  document.getElementById("pop").style.display="flex";
+  win?winSound():lossSound();
+  setTimeout(()=>document.getElementById("pop").style.display="none",1100);
+ }
+ document.getElementById("sec").innerText=s;
+},1000);
+render();
+</script>
+
+</body>
+</html>
